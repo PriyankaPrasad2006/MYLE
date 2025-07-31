@@ -1,0 +1,275 @@
+{% extends 'medicines/base.html' %}
+
+{% block title %}All Medicines - Medicine QR Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-list text-primary"></i> All Medicines
+            </h2>
+            <div>
+                <a href="{% url 'medicines:create_qr' %}" class="btn btn-success me-2">
+                    <i class="fas fa-plus"></i> Add New Medicine
+                </a>
+                {% if medicines %}
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
+                    <i class="fas fa-trash-alt"></i> Delete All
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if medicines %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-pills"></i> Registered Medicines ({{ medicines|length }})
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Medicine Name</th>
+                                <th>Batch Number</th>
+                                <th>Manufacturer</th>
+                                <th>Mfg Date</th>
+                                <th>Exp Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for medicine in medicines %}
+                            <tr>
+                                <td>
+                                    <strong>{{ medicine.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">Added: {{ medicine.created_at|date:"M d, Y" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ medicine.batch_number }}</span>
+                                </td>
+                                <td>{{ medicine.manufacturer }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ medicine.manufacturing_date }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if medicine.expiry_date|date:'Y-m-d' < 'today'|date:'Y-m-d' %}danger{% else %}success{% endif %}">
+                                        {{ medicine.expiry_date }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if medicine.expiry_date|date:'Y-m-d' < 'today'|date:'Y-m-d' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Expired
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> Valid
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'medicines:qr_code_display' medicine.pk %}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="View QR Code">
+                                            <i class="fas fa-qrcode"></i>
+                                        </a>
+                                        <a href="{% url 'medicines:download_qr' medicine.pk %}" 
+                                           class="btn btn-sm btn-outline-success"
+                                           title="Download QR Code">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Delete Medicine"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deleteModal{{ medicine.pk }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row mt-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-pills fa-2x text-primary mb-2"></i>
+                        <h5>{{ medicines|length }}</h5>
+                        <small class="text-muted">Total Medicines</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h5 id="valid-count">-</h5>
+                        <small class="text-muted">Valid Medicines</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                        <h5 id="expired-count">-</h5>
+                        <small class="text-muted">Expired</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-qrcode fa-2x text-info mb-2"></i>
+                        <h5>{{ medicines|length }}</h5>
+                        <small class="text-muted">QR Codes Generated</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        // Calculate valid and expired medicines using JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let validCount = 0;
+            let expiredCount = 0;
+            
+            // Get all table rows (excluding header)
+            const tableRows = document.querySelectorAll('tbody tr');
+            
+            tableRows.forEach(row => {
+                const expiryCell = row.children[4]; // 5th column (0-indexed) contains expiry date
+                if (expiryCell) {
+                    const expiryBadge = expiryCell.querySelector('.badge');
+                    if (expiryBadge) {
+                        const expiryDateText = expiryBadge.textContent.trim();
+                        const expiryDate = new Date(expiryDateText);
+                        
+                        if (expiryDate >= today) {
+                            validCount++;
+                        } else {
+                            expiredCount++;
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('valid-count').textContent = validCount;
+            document.getElementById('expired-count').textContent = expiredCount;
+        });
+        </script>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i class="fas fa-pills fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">No medicines found</h4>
+                    <p class="text-muted mb-4">You haven't added any medicines yet. Start by adding your first medicine to generate QR codes.</p>
+                    <a href="{% url 'medicines:create_qr' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> Add First Medicine
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Back to Home -->
+        <div class="text-center mt-4">
+            <a href="{% url 'medicines:home' %}" class="btn btn-outline-dark">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+
+        <!-- Individual Delete Modals -->
+        {% for medicine in medicines %}
+        <div class="modal fade" id="deleteModal{{ medicine.pk }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ medicine.pk }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel{{ medicine.pk }}">
+                            <i class="fas fa-exclamation-triangle text-warning"></i> Confirm Delete
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the following medicine?</p>
+                        <div class="alert alert-warning">
+                            <strong>{{ medicine.name }}</strong><br>
+                            <small>Batch: {{ medicine.batch_number }} | Manufacturer: {{ medicine.manufacturer }}</small>
+                        </div>
+                        <p class="text-danger"><small><i class="fas fa-warning"></i> This action cannot be undone.</small></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <form method="post" action="{% url 'medicines:delete_medicine' medicine.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> Delete Medicine
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Delete All Modal -->
+        <div class="modal fade" id="deleteAllModal" tabindex="-1" aria-labelledby="deleteAllModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteAllModalLabel">
+                            <i class="fas fa-exclamation-triangle text-danger"></i> Delete All Medicines
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Warning!</strong> This will permanently delete all {{ medicines|length }} medicines from the database.
+                        </div>
+                        <p>Are you sure you want to delete <strong>ALL</strong> medicines? This action cannot be undone.</p>
+                        <ul class="text-muted">
+                            <li>All medicine records will be permanently removed</li>
+                            <li>All associated QR code data will be lost</li>
+                            <li>This action affects {{ medicines|length }} medicine(s)</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <form method="post" action="{% url 'medicines:delete_all_medicines' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> Delete All Medicines
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

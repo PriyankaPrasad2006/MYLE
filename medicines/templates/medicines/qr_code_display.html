@@ -1,0 +1,206 @@
+{% extends 'medicines/base.html' %}
+
+{% block title %}QR Code - {{ medicine.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Success Message -->
+        <div class="alert alert-success" role="alert">
+            <i class="fas fa-check-circle"></i>
+            <strong>Success!</strong> QR code has been generated for <strong>{{ medicine.name }}</strong>
+        </div>
+
+        <div class="row">
+            <!-- Medicine Information -->
+            <div class="col-md-6 mb-4">
+                <div class="medicine-info">
+                    <h4 class="text-primary mb-3">
+                        <i class="fas fa-pills"></i> Medicine Details
+                    </h4>
+                    <div class="row">
+                        <div class="col-sm-4"><strong>Name:</strong></div>
+                        <div class="col-sm-8">{{ medicine.name }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-4"><strong>Batch Number:</strong></div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-secondary fs-6">{{ medicine.batch_number }}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-4"><strong>Manufacturer:</strong></div>
+                        <div class="col-sm-8">{{ medicine.manufacturer }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-4"><strong>Mfg Date:</strong></div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-info">{{ medicine.manufacturing_date }}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-4"><strong>Exp Date:</strong></div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-{% if medicine.expiry_date|date:'Y-m-d' < 'today'|date:'Y-m-d' %}danger{% else %}success{% endif %}">
+                                {{ medicine.expiry_date }}
+                            </span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-4"><strong>Created:</strong></div>
+                        <div class="col-sm-8">{{ medicine.created_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="col-md-6 mb-4">
+                <div class="qr-container">
+                    <h4 class="text-primary mb-3">
+                        <i class="fas fa-qrcode"></i> QR Code
+                    </h4>
+                    <div class="mb-3">
+                        <img src="data:image/png;base64,{{ qr_code_base64 }}" 
+                             alt="QR Code for {{ medicine.name }}"
+                             class="img-fluid border rounded"
+                             style="max-width: 300px;">
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Scan this QR code to view medicine information
+                    </p>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'medicines:download_qr' medicine.pk %}" 
+                           class="btn btn-success">
+                            <i class="fas fa-download"></i> Download QR Code
+                        </a>
+                        <button class="btn btn-outline-primary" onclick="printQR()">
+                            <i class="fas fa-print"></i> Print QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw QR Data -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-code"></i> QR Code Data
+                </h6>
+            </div>
+            <div class="card-body">
+                <pre class="bg-light p-3 rounded"><code>{{ medicine.get_qr_data }}</code></pre>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'medicines:create_qr' %}" class="btn btn-primary me-md-2">
+                        <i class="fas fa-plus"></i> Add Another Medicine
+                    </a>
+                    <a href="{% url 'medicines:medicine_list' %}" class="btn btn-outline-secondary me-md-2">
+                        <i class="fas fa-list"></i> View All Medicines
+                    </a>
+                    <button type="button" class="btn btn-outline-danger me-md-2" data-bs-toggle="modal" data-bs-target="#deleteMedicineModal">
+                        <i class="fas fa-trash-alt"></i> Delete Medicine
+                    </button>
+                    <a href="{% url 'medicines:home' %}" class="btn btn-outline-dark">
+                        <i class="fas fa-home"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Medicine Modal -->
+        <div class="modal fade" id="deleteMedicineModal" tabindex="-1" aria-labelledby="deleteMedicineModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteMedicineModalLabel">
+                            <i class="fas fa-exclamation-triangle text-warning"></i> Confirm Delete
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this medicine?</p>
+                        <div class="alert alert-warning">
+                            <strong>{{ medicine.name }}</strong><br>
+                            <small>Batch: {{ medicine.batch_number }} | Manufacturer: {{ medicine.manufacturer }}</small>
+                        </div>
+                        <p class="text-danger"><small><i class="fas fa-warning"></i> This action cannot be undone and will also remove the associated QR code data.</small></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <form method="post" action="{% url 'medicines:delete_medicine' medicine.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> Delete Medicine
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function printQR() {
+    // Create a new window with just the QR code for printing
+    var printWindow = window.open('', '_blank');
+    var qrImage = document.querySelector('img[alt*="QR Code"]').src;
+    
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>QR Code - {{ medicine.name }}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 20px; 
+                    }
+                    .medicine-info { 
+                        margin-bottom: 20px; 
+                        text-align: left;
+                        max-width: 400px;
+                        margin: 0 auto 20px auto;
+                    }
+                    img { 
+                        max-width: 300px; 
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>{{ medicine.name }}</h2>
+                <div class="medicine-info">
+                    <p><strong>Batch:</strong> {{ medicine.batch_number }}</p>
+                    <p><strong>Manufacturer:</strong> {{ medicine.manufacturer }}</p>
+                    <p><strong>Mfg Date:</strong> {{ medicine.manufacturing_date }}</p>
+                    <p><strong>Exp Date:</strong> {{ medicine.expiry_date }}</p>
+                </div>
+                <img src="${qrImage}" alt="QR Code">
+            </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+</script>
+{% endblock %}
