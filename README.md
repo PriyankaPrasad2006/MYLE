@@ -22,7 +22,7 @@ A Django web application that allows users to input medicine data and generate u
 
 1. **Clone or download the project**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/PriyankaPrasad2006/MYLE.git
    cd medicine_qr_app
    ```
 
@@ -253,3 +253,4 @@ This project is open source and available under the MIT License.
 
 For issues and questions, please check the Django documentation or create an issue in the project repository.
 #
+
