@@ -5,9 +5,12 @@ A Django web application that allows users to input medicine data and generate u
 
 ## Features
 
-- **Medicine Data Input**: User-friendly form to enter medicine details (name, batch number, manufacturing date, expiry date, manufacturer)
-- **QR Code Generation**: Dynamically create unique QR codes based on submitted data
-- **QR Code Display**: View generated QR codes with medicine information
+- **Medicine Data Input**: User-friendly form to enter medicine details (name, description, batch number, manufacturing date, expiry date, manufacturer, MRP, caution information)
+- **QR Code Generation**: Dynamically create unique QR codes containing URLs to medicine details
+- **Public Medicine Details**: Beautiful mobile-friendly pages that display when QR codes are scanned
+- **Universal QR Scanning**: Works with any QR scanner app - users scan and get redirected to your website
+- **Text-to-Speech**: Read medicine information aloud for accessibility
+- **Expiry Warnings**: Visual alerts for expired medicines
 - **Data Storage**: Save medicine data in SQLite database
 - **QR Code Download**: Download QR codes as PNG files
 - **Print Functionality**: Print QR codes for physical labeling
@@ -83,14 +86,27 @@ A Django web application that allows users to input medicine data and generate u
 
 ### QR Code Content
 
-Each QR code contains the following information:
+Each QR code contains a URL that links to the medicine details page:
 ```
-Medicine: [Medicine Name]
-Batch: [Batch Number]
-Mfg Date: [Manufacturing Date]
-Exp Date: [Expiry Date]
-Manufacturer: [Manufacturer Name]
+http://yourdomain.com/medicine/[batch_number]/
 ```
+
+When scanned with any QR scanner app (built into most phone cameras), users are automatically redirected to a beautiful, mobile-optimized page showing:
+- Medicine name and description
+- Batch number and manufacturer
+- Manufacturing and expiry dates
+- Price information
+- Important cautions and warnings
+- Text-to-speech functionality
+- Expiry status with visual warnings
+
+### How QR Scanning Works
+
+1. **For End Users**: Simply point their phone camera at the QR code or use any QR scanner app
+2. **Automatic Redirect**: The QR code contains a URL that opens in their web browser
+3. **Beautiful Display**: Users see a professional, mobile-friendly page with all medicine details
+4. **Accessibility Features**: Text-to-speech support and multilingual options
+5. **Safety Checks**: Clear warnings for expired medicines
 
 ## Project Structure
 

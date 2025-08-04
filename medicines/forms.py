@@ -5,11 +5,16 @@ from .models import Medicine
 class MedicineForm(forms.ModelForm):
     class Meta:
         model = Medicine
-        fields = ['name', 'batch_number', 'manufacturing_date', 'expiry_date', 'manufacturer']
+        fields = ['name', 'description', 'batch_number', 'manufacturing_date', 'expiry_date', 'manufacturer', 'mrp', 'caution']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter medicine name'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter medicine description',
+                'rows': 3
             }),
             'batch_number': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -26,6 +31,16 @@ class MedicineForm(forms.ModelForm):
             'manufacturer': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter manufacturer name'
+            }),
+            'mrp': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter MRP',
+                'step': '0.01'
+            }),
+            'caution': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter cautionary information',
+                'rows': 3
             }),
         }
         

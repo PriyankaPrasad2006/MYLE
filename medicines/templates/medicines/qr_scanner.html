@@ -1,0 +1,393 @@
+{% extends 'medicines/base.html' %}
+
+{% block title %}QR Scanner - MYLE{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Custom styles for the QR scanner */
+.scanner-container {
+    text-align: center;
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin: 0 auto;
+    max-width: 400px;
+}
+
+#preview {
+    width: 300px;
+    height: 300px;
+    border-radius: 10px;
+    border: 2px solid #ccc;
+    margin: 20px auto;
+}
+
+/* Result Card Styles */
+.result-container {
+    width: 100%;
+    max-width: 400px;
+    background-color: #ffffff;
+    border: 3px solid #000;
+    border-radius: 20px;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    margin: 0 auto;
+}
+
+.result-container.show {
+    display: flex;
+}
+
+/* Navbar */
+.navbar-custom {
+    background-color: #004a99;
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-custom .title {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.icon {
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Controls Bar */
+.controls-bar {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+/* Medicine Info */
+.medicine-info {
+    padding: 15px;
+    text-align: left;
+    flex-grow: 1;
+}
+
+.medicine-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.medicine-description {
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #333;
+}
+
+.details-section {
+    margin: 20px 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.details-section p {
+    margin: 5px 0;
+}
+
+.caution-box {
+    border: 1px solid #ff4d4d;
+    background-color: #fff0f0;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.caution-box p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #d93030;
+    font-weight: bold;
+}
+
+/* History Bar */
+.history-bar {
+    padding: 15px;
+    background-color: #f7f7f7;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: center;
+}
+
+.history-dropdown select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.language-dropdown select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.hidden {
+    display: none !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Scanner Container -->
+            <div id="scanner-container" class="scanner-container">
+                <h2 class="mb-4"><i class="fas fa-qrcode"></i> Scan QR Code</h2>
+                <video id="preview"></video>
+                <div class="mt-3">
+                    <button id="start-scanner" class="btn btn-success">
+                        <i class="fas fa-play"></i> Start Scanner
+                    </button>
+                    <button id="stop-scanner" class="btn btn-danger" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop Scanner
+                    </button>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'medicines:home' %}" class="btn btn-secondary">
+                        <i class="fas fa-home"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+
+            <!-- Result Container -->
+            <div id="result-container" class="result-container">
+                <header class="navbar-custom">
+                    <i id="rescan-button" class="fas fa-qrcode icon" title="Scan Another Code"></i>
+                    <span class="title">MYLE</span>
+                    <div></div>
+                </header>
+                
+                <div class="controls-bar">
+                    <i class="fas fa-volume-high icon" id="speaker-icon" title="Read Aloud"></i>
+                    <div class="language-dropdown">
+                        <select name="language" id="language-select">
+                            <option value="en">English</option>
+                            <option value="hi">Hindi</option>
+                            <option value="bn">Bengali</option>
+                        </select>
+                    </div>
+                </div>
+
+                <main class="medicine-info">
+                    <h2 class="medicine-name" id="medicine-name"></h2>
+                    <p class="medicine-description" id="medicine-description"></p>
+                    
+                    <div class="details-section">
+                        <p><strong>BATCH NO:</strong> <span id="batch-no"></span></p>
+                        <p><strong>MFG:</strong> <span id="mfg-date"></span></p>
+                        <p><strong>EXP:</strong> <span id="exp-date"></span></p>
+                        <p><strong>M.R.P:</strong> FOR 15 TABS ₹<span id="mrp"></span> INVL. OF ALL TAXES</p>
+                    </div>
+
+                    <div class="caution-box">
+                        <p id="caution-text"></p>
+                    </div>
+                </main>
+
+                <footer class="history-bar">
+                    <div class="history-dropdown">
+                        <select name="history" id="history-select">
+                            <option value="">History</option>
+                        </select>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Instascan library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.10/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/3.3.3/adapter.min.js"></script>
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+
+<script>
+// Get references to HTML elements
+const scannerContainer = document.getElementById('scanner-container');
+const resultContainer = document.getElementById('result-container');
+const rescanButton = document.getElementById('rescan-button');
+const startButton = document.getElementById('start-scanner');
+const stopButton = document.getElementById('stop-scanner');
+const speakerIcon = document.getElementById('speaker-icon');
+
+// Initialize the QR Code Scanner
+let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+let isScanning = false;
+
+// Add event listener for successful scans
+scanner.addListener('scan', function (content) {
+    console.log("Scanned content:", content);
+
+    try {
+        // Parse the JSON data from the QR code
+        const data = JSON.parse(content);
+
+        // Populate the UI with the parsed data
+        populateUI(data);
+
+        // Hide the scanner and show the result card
+        scannerContainer.classList.add('hidden');
+        resultContainer.classList.add('show');
+        
+        // Stop the scanner
+        stopScanner();
+
+        // Save to history
+        saveToHistory(data);
+
+    } catch (e) {
+        console.error("Failed to parse JSON from QR code:", e);
+        alert("Invalid QR Code format. Please scan a valid MYLE QR code.");
+    }
+});
+
+// Function to start scanner
+function startScanner() {
+    Instascan.Camera.getCameras().then(function (cameras) {
+        if (cameras.length > 0) {
+            scanner.start(cameras[0]);
+            isScanning = true;
+            startButton.style.display = 'none';
+            stopButton.style.display = 'inline-block';
+        } else {
+            console.error('No cameras found.');
+            alert('No cameras found on this device.');
+        }
+    }).catch(function (e) {
+        console.error(e);
+        alert('Error accessing camera: ' + e.message);
+    });
+}
+
+// Function to stop scanner
+function stopScanner() {
+    if (isScanning) {
+        scanner.stop();
+        isScanning = false;
+        startButton.style.display = 'inline-block';
+        stopButton.style.display = 'none';
+    }
+}
+
+// Function to populate UI with scanned data
+function populateUI(data) {
+    document.getElementById('medicine-name').textContent = data.name || 'N/A';
+    document.getElementById('medicine-description').textContent = data.description || 'No description available.';
+    document.getElementById('batch-no').textContent = data.batchNo || 'N/A';
+    document.getElementById('mfg-date').textContent = data.mfgDate || 'N/A';
+    document.getElementById('exp-date').textContent = data.expDate || 'N/A';
+    document.getElementById('mrp').textContent = data.mrp || 'N/A';
+    document.getElementById('caution-text').textContent = data.caution || 'No cautionary information provided.';
+}
+
+// Function to reset scanner
+function resetScanner() {
+    resultContainer.classList.remove('show');
+    scannerContainer.classList.remove('hidden');
+    startScanner();
+}
+
+// Function to save scan to history
+function saveToHistory(data) {
+    let history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+    const historyItem = {
+        name: data.name,
+        batchNo: data.batchNo,
+        timestamp: new Date().toLocaleString(),
+        data: data
+    };
+    
+    history.unshift(historyItem);
+    
+    // Keep only last 10 items
+    if (history.length > 10) {
+        history = history.slice(0, 10);
+    }
+    
+    localStorage.setItem('scanHistory', JSON.stringify(history));
+    updateHistoryDropdown();
+}
+
+// Function to update history dropdown
+function updateHistoryDropdown() {
+    const historySelect = document.getElementById('history-select');
+    const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+    
+    // Clear existing options except the first one
+    historySelect.innerHTML = '<option value="">History</option>';
+    
+    history.forEach((item, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${item.name} - ${item.timestamp}`;
+        historySelect.appendChild(option);
+    });
+}
+
+// Function to read text aloud
+function readAloud() {
+    const name = document.getElementById('medicine-name').textContent;
+    const description = document.getElementById('medicine-description').textContent;
+    const batchNo = document.getElementById('batch-no').textContent;
+    const mfgDate = document.getElementById('mfg-date').textContent;
+    const expDate = document.getElementById('exp-date').textContent;
+    const caution = document.getElementById('caution-text').textContent;
+    
+    const textToRead = `Medicine: ${name}. ${description}. Batch number: ${batchNo}. Manufacturing date: ${mfgDate}. Expiry date: ${expDate}. Caution: ${caution}`;
+    
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.rate = 0.8;
+        speechSynthesis.speak(utterance);
+    } else {
+        alert('Text-to-speech is not supported in your browser.');
+    }
+}
+
+// Event listeners
+startButton.addEventListener('click', startScanner);
+stopButton.addEventListener('click', stopScanner);
+rescanButton.addEventListener('click', resetScanner);
+speakerIcon.addEventListener('click', readAloud);
+
+// History dropdown change event
+document.getElementById('history-select').addEventListener('change', function() {
+    const selectedIndex = this.value;
+    if (selectedIndex !== '') {
+        const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+        const selectedItem = history[selectedIndex];
+        if (selectedItem) {
+            populateUI(selectedItem.data);
+        }
+    }
+});
+
+// Initialize history dropdown on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateHistoryDropdown();
+});
+</script>
+{% endblock %}
