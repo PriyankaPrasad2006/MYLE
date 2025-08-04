@@ -9,14 +9,18 @@ A Django web application that allows users to input medicine data and generate u
 - **QR Code Generation**: Dynamically create unique QR codes containing URLs to medicine details
 - **Public Medicine Details**: Beautiful mobile-friendly pages that display when QR codes are scanned
 - **Universal QR Scanning**: Works with any QR scanner app - users scan and get redirected to your website
-- **Text-to-Speech**: Read medicine information aloud for accessibility
-- **Expiry Warnings**: Visual alerts for expired medicines
+- **Multilingual Support**: Real-time translation to 9 Indian languages (Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi)
+- **Smart Translation**: Preserves medicine names and manufacturer names while translating descriptions and UI elements
+- **Text-to-Speech**: Read medicine information aloud for accessibility in multiple languages
+- **Offline Translation**: Core UI elements translate offline, descriptions use Google Translate when available
+- **Expiry Warnings**: Visual alerts for expired medicines with multilingual warnings
 - **Data Storage**: Save medicine data in SQLite database
 - **QR Code Download**: Download QR codes as PNG files
 - **Print Functionality**: Print QR codes for physical labeling
 - **Responsive Design**: Modern Bootstrap-based UI that works on all devices
 - **Admin Interface**: Django admin panel for managing medicines
 - **Data Validation**: Form validation including expiry date checks
+- **Test Interface**: Built-in QR code testing page for development
 
 ## Installation
 
@@ -146,9 +150,34 @@ medicine_qr_app/
 
 ## Dependencies
 
-- **Django 5.2+**: Web framework
-- **qrcode[pil]**: QR code generation library
-- **Pillow**: Image processing (required by qrcode)
+- **Django 5.1+**: Web framework
+- **qrcode[pil] 7.0+**: QR code generation library
+- **Pillow 10.0+**: Image processing (required by qrcode)
+- **googletrans 4.0.0rc1**: Google Translate API for multilingual support
+- **httpx, httpcore**: HTTP client libraries (required by googletrans)
+
+## Multilingual Support
+
+The application supports 10 languages with smart translation features:
+
+### Supported Languages
+- **English** (Default)
+- **Hindi** (हिंदी)
+- **Bengali** (বাংলা)
+- **Tamil** (தமிழ்)
+- **Telugu** (తెలుగు)
+- **Marathi** (मराठी)
+- **Gujarati** (ગુજરાતી)
+- **Kannada** (ಕನ್ನಡ)
+- **Malayalam** (മലയാളം)
+- **Punjabi** (ਪੰਜਾਬੀ)
+
+### Translation Features
+- **Offline UI Translation**: Core interface elements translate instantly without internet
+- **Google Translate Integration**: Medicine descriptions and cautions translated via Google Translate API
+- **Smart Preservation**: Medicine names and manufacturer names always remain in original language
+- **Text-to-Speech**: Supports speech synthesis in all languages
+- **Fallback System**: If Google Translate fails, shows original text with translated UI
 
 ## Development
 
