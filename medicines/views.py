@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -146,6 +147,7 @@ def home(request):
     return render(request, 'medicines/home.html', {'recent_medicines': recent_medicines})
 
 
+@login_required
 def create_medicine_qr(request):
     """Create medicine and generate QR code."""
     if request.method == 'POST':
@@ -190,6 +192,7 @@ def qr_code_display(request, pk):
     })
 
 
+@login_required
 def medicine_list(request):
     """Display list of all medicines."""
     medicines = Medicine.objects.all()
@@ -215,6 +218,7 @@ def delete_all_medicines(request):
     return redirect('medicines:medicine_list')
 
 
+@login_required
 def download_qr_code(request, pk):
     """Download QR code as PNG file."""
     medicine = get_object_or_404(Medicine, pk=pk)
