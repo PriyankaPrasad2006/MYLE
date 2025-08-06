@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
+from django.views import View
 
 
 class CustomLoginView(LoginView):
@@ -34,3 +36,21 @@ def signup_view(request):
         form = UserCreationForm()
     
     return render(request, 'auth/signup.html', {'form': form})
+
+
+class CustomLogoutView(View):
+    """Custom logout view with confirmation page."""
+    template_name = 'auth/logout.html'
+    
+    def get(self, request, *args, **kwargs):
+        """Show logout confirmation page."""
+        if not request.user.is_authenticated:
+            return redirect('medicines:home')
+        return render(request, self.template_name)
+    
+    def post(self, request, *args, **kwargs):
+        """Handle logout confirmation."""
+        if request.user.is_authenticated:
+            logout(request)
+            messages.success(request, 'You have been successfully logged out.')
+        return redirect('medicines:home')
